@@ -5,8 +5,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-gesture-handler';
 import './global.css';
 
-import Routes from '~/routes';
+
 import { COLORS } from '~/constants/colors';
+import Routes from '~/routes/routes';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -19,9 +20,9 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
-      <StatusBar translucent={true} barStyle="light-content" backgroundColor={COLORS.blue_night} />
-        <Routes />
+    <GestureHandlerRootView style={{ flex: 1 }}>      
+      <StatusBar translucent={true} barStyle="light-content" backgroundColor={COLORS.dark_blue.background} />
+      <Routes />
     </GestureHandlerRootView>
   );
 }

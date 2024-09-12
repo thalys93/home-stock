@@ -1,11 +1,12 @@
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import Splash_Screen from '~/app/splash_screen';
 import UserRoutes from './user.routes';
+import { routeProps } from '~/utils/interfaces/navigation_interfaces';
 
-const stackRoutes = createStackNavigator();
+const stackRoutes = createNativeStackNavigator();
 
-const appRoutes = () => {
+const AppRoutes = ({ navigation, route }: routeProps) => {
     return (
         <stackRoutes.Navigator
             initialRouteName="SplashScreen"
@@ -19,4 +20,4 @@ const appRoutes = () => {
     )
 }
 
-export default appRoutes
+export default AppRoutes
