@@ -1,5 +1,5 @@
 import { loginProps } from "~/utils/interfaces/login_interface";
-import { APIlocal } from "../api";
+import { APIlocal } from "./api";
 
 export async function doLogin(data: loginProps) {
     try {

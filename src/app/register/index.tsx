@@ -9,7 +9,7 @@ import { Button, Checkbox, TextInput } from 'react-native-paper'
 import { apiRegisterValues, RegisterValues } from '~/utils/interfaces/register_interfaces'
 import { Formik, useFormik } from 'formik'
 import * as Yup from 'yup'
-import { doRegister } from '~/services/api/user/user'
+import { doRegister } from '~/services/api/user'
 import Toast from 'react-native-toast-message'
 import { toastDarkMode } from '~/utils/configs/toast'
 

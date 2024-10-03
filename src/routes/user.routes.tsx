@@ -3,7 +3,12 @@ import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-paper';
 import { RFValue } from 'react-native-responsive-fontsize';
+import Home from '~/app/home';
 import Login from '~/app/login';
+import New_Categorie from '~/app/new_categorie';
+import Product from '~/app/product';
+import Product_List from '~/app/product_list';
+import Profile from '~/app/profile';
 import Register from '~/app/register';
 import { COLORS } from '~/constants/colors';
 import { routeProps } from '~/utils/interfaces/navigation_interfaces';
@@ -40,6 +45,30 @@ const UserRoutes = ({ navigation, route }: routeProps) => (
                 )
             }}
             component={Register} />
+
+        <stackRoutes.Screen
+            name="Home"
+            component={Home}
+        />
+
+        <stackRoutes.Screen
+            name="product_list"
+            component={Product_List}
+        />
+
+        <stackRoutes.Screen
+            name="Product"
+            component={Product} />
+
+        <stackRoutes.Screen
+            name="new_categorie"
+            component={New_Categorie} />
+
+        <stackRoutes.Screen
+            name="Profile"
+            component={Profile} />
+
+
 
     </stackRoutes.Navigator>
 );
