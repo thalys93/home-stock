@@ -1,12 +1,34 @@
+import { StyleSheet } from "react-native";
 import { ThemeProp } from "react-native-paper/lib/typescript/types";
-import { RFPercentage } from "react-native-responsive-fontsize";
+import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
+import { COLORS } from "./colors";
+import { FONTS } from "./fonts";
 
-export const globalStyles = {
+export const appName = "Home Stock"
+export const appVersion = "1.0.0"
+export const branch = "alpha"
+
+export const globalStyles = StyleSheet.create({
     container: {
         flex: 1,
         paddingTop: RFPercentage(5),
+        backgroundColor: COLORS.bgColor
     },
-}
+
+    defaultToast1Text: {
+        textAlign: 'center',
+        fontFamily: FONTS.Worksans,
+        fontSize: RFValue(12),
+        color: COLORS.whiteTxt
+    },
+    
+    defaultToast2Text: {
+        textAlign: 'center',
+        fontFamily: FONTS.Worksans,
+        fontSize: RFValue(12),
+        color: COLORS.whiteTxt
+    }
+})
 
 export const ThemeLight: ThemeProp = {
     colors: {

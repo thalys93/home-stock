@@ -3,15 +3,16 @@ import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-paper';
 import { RFValue } from 'react-native-responsive-fontsize';
-import Home from '~/app/home';
-import Login from '~/app/login';
-import New_Categorie from '~/app/new_categorie';
-import Product from '~/app/product';
-import Product_List from '~/app/product_list';
-import Profile from '~/app/profile';
-import Register from '~/app/register';
+import Home from '~/app/home/Home';
+import Login from '~/app/login/Login';
+import New_Categorie from '~/app/new_category/New_Category';
+import Product from '~/app/product/Product';
+import Product_List from '~/app/product_list/Product_List';
+import Profile from '~/app/profile/Profile';
+import Register from '~/app/register/Register';
 import { COLORS } from '~/constants/colors';
-import { routeProps } from '~/utils/interfaces/navigation_interfaces';
+import { routeProps } from '~/utils/interfaces/navigation_interface';
+import BarRoutes from './bar.routes';
 
 const stackRoutes = createNativeStackNavigator();
 
@@ -33,13 +34,13 @@ const UserRoutes = ({ navigation, route }: routeProps) => (
                 headerBackButtonMenuEnabled: true,
                 headerTitle: '',
                 headerStyle: {
-                    backgroundColor: COLORS.dark_blue.background,
+                    backgroundColor: COLORS.bgColor,
                 },
                 headerShadowVisible: false,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => navigation?.navigate("Login")}>
                         <View>
-                            <Icon source={"chevron-left"} size={RFValue(30)} color={COLORS.light_blue.onPrimary} />
+                            <Icon source={"chevron-left"} size={RFValue(30)} color={COLORS.whiteTxt} />
                         </View>
                     </TouchableOpacity>
                 )
@@ -47,8 +48,8 @@ const UserRoutes = ({ navigation, route }: routeProps) => (
             component={Register} />
 
         <stackRoutes.Screen
-            name="Home"
-            component={Home}
+            name="Auth_Routes"
+            component={BarRoutes}
         />
 
         <stackRoutes.Screen

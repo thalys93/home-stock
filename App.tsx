@@ -21,7 +21,7 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>      
-      <StatusBar translucent={true} barStyle="light-content" backgroundColor={COLORS.dark_blue.background} />
+      <StatusBar translucent={true} barStyle="light-content" backgroundColor={COLORS.bgColor} />
       <Routes />
     </GestureHandlerRootView>
   );

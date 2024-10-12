@@ -46,7 +46,7 @@ const Splash_Screen = () => {
       </View>
 
       <Animated.View style={[styles.loaderContainer, AnimatedOpacityStyle]}>
-        <ActivityIndicator color={COLORS.light_blue.surfaceVariant} size={RFValue(50)} />
+        <ActivityIndicator color={COLORS.whiteTxt} size={RFValue(50)} />
       </Animated.View>
 
       <View style={styles.textContainer}>
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: COLORS.dark_blue.background,
+    backgroundColor: COLORS.bgColor,
   },
   imageContainer: {
     flexDirection: 'column',
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   title: {
-    color: COLORS.light_blue.surfaceVariant,
+    color: COLORS.whiteSecondary,
     fontSize: RFValue(25),
     height: RFValue(50),
     fontFamily: FONTS.Worksans,
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   subtitle: {
-    color: COLORS.light_blue.surfaceVariant,
+    color: COLORS.whiteSecondary,
     fontSize: RFValue(15),
     height: RFValue(30),
     fontFamily: FONTS.Worksans,
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: RFValue(14),
-    color: COLORS.light_blue.surfaceVariant,
+    color: COLORS.whiteSecondary,
     height: RFValue(100),
     width: RFValue(140),
     textAlign: 'center',

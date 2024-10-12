@@ -7,21 +7,43 @@ import { COLORS } from '~/constants/colors'
 import { Button, Divider, TextInput } from 'react-native-paper'
 import { Cursor } from 'phosphor-react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
-import { routeProps } from '~/utils/interfaces/navigation_interfaces'
+import { routeProps } from '~/utils/interfaces/navigation_interface'
 import { Formik, useFormik } from 'formik'
 import * as Yup from 'yup'
-import { loginProps } from '~/utils/interfaces/login_interface'
 import Toast from 'react-native-toast-message'
-import { doLogin } from '~/services/api/auth'
+import { doLogin, loginProps } from '~/services/api/auth'
 import { toastDarkMode } from '~/utils/configs/toast'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { AxiosResponse } from 'axios'
+import { Return_UserLogin } from '~/utils/interfaces/api_response_interface'
+import { Req_Status } from '~/utils/enums/status'
+
+export async function saveToken(token: string) {
+    try {
+        const asyncToken = await AsyncStorage.setItem("@USER_TOKEN", token);
+        return { message: "Token Salvo com Sucesso", data: asyncToken }
+    } catch (error) {
+        return { message: "Erro ao Salvar Token", data: error }
+    }
+}
+
+export async function saveUserId(id: string) {
+    try {
+        const asyncId = await AsyncStorage.setItem("@USER_ID", id);
+        return { message: "ID Salvo com Sucesso", data: asyncId }
+    } catch (error) {
+        return { message: "Erro ao Salvar ID", data: error }
+    }
+}
 
 const Login = ({ navigation, route }: routeProps) => {
     const [hidden, setHidden] = React.useState<boolean>(false)
     const [savedEmail, setSavedEmail] = React.useState<string>('')
+    const [isCheckingData, setIsCheckingData] = React.useState<boolean>(false)
     const [savedPassword, setSavedPassword] = React.useState<string>('')
     const [isLoading, setIsLoading] = React.useState<boolean>(false)
     const [hasSavedData, setHasSavedData] = React.useState<boolean>(false)
+
     const imageSRC = require('~/assets/png/Login-rafiki.png')
     const opacity = useSharedValue(0);
 
@@ -41,6 +63,7 @@ const Login = ({ navigation, route }: routeProps) => {
             console.log("Salvando Dados no Async");
             await AsyncStorage.setItem("@UserLogin", JSON.stringify(formattedData))
             console.log("Dados Salvos com Sucesso")
+            navigation?.navigate("Auth_Routes")
         } catch (error) {
             console.error("Erro ao Salvar Dados:", error);
             setHasSavedData(false)
@@ -48,6 +71,7 @@ const Login = ({ navigation, route }: routeProps) => {
     }
 
     async function returnUserLoginData() {
+        setIsCheckingData(true)
         try {
             const data = await AsyncStorage.getItem("@UserLogin");
             if (data !== null) {
@@ -63,170 +87,87 @@ const Login = ({ navigation, route }: routeProps) => {
             console.error("Erro ao retornar dados:", error);
             setHasSavedData(false)
             return null;
+        } finally {
+            setIsCheckingData(false)
         }
     }
 
     function showWarning(values: loginProps) {
         Alert.alert("Atenção", "Deseja Salvar Dados de Acesso?", [
             { text: "Sim", onPress: () => saveLoginData(values) },
-            { text: "Não" },
+            { text: "Não", onPress: () => navigation?.navigate("Auth_Routes") },
         ])
     }
+    
 
     async function handleLogin(values: loginProps) {
         setIsLoading(true);
 
         const formattedValues = {
-            email: savedEmail || values.email,
-            password: savedPassword || values.password
+            email: values.email,
+            password: values.password
         };
 
-        Toast.show({
-            type: "info",
-            position: 'top',
-            text1: "Atenção",
-            text1Style: {
-                textAlign: 'center',
-                fontFamily: FONTS.Worksans,
-                fontSize: RFValue(12),
-                color: COLORS.light_blue.surface
-            },
-            text2: "Realizando Login",
-            text2Style: {
-                textAlign: 'center',
-                fontFamily: FONTS.Worksans,
-                fontSize: RFValue(12),
-                color: COLORS.light_blue.onPrimary
-            },
-            autoHide: true,
-            swipeable: true
-        });
-
         try {
-            const isDoneLogin = await doLogin(formattedValues);
-
-            switch (isDoneLogin.message) {
-                case "Login Realizado com Sucesso":
+            const LoginResponse = await doLogin(formattedValues);
+            console.log(LoginResponse.status);
+            switch (LoginResponse.status) {
+                case Req_Status.OK:
+                    const successResponse: Return_UserLogin = LoginResponse.data
                     Toast.show({
-                        type: 'success',
+                        type: "success",
                         position: 'top',
+                        autoHide: true,
+                        swipeable: true,
                         text1: "Sucesso",
-                        text1Style: {
-                            textAlign: 'center',
-                            fontFamily: FONTS.Worksans,
-                            fontSize: RFValue(12),
-                            color: COLORS.light_blue.surface
-                        },
-                        text2: "Login Realizado!",
-                        text2Style: {
-                            textAlign: 'center',
-                            fontFamily: FONTS.Worksans,
-                            fontSize: RFValue(12),
-                            color: COLORS.light_blue.onPrimary
-                        },
-                        autoHide: true,
-                        swipeable: true
-                    });
+                        text1Style: globalStyles.defaultToast1Text,
+                        text2: "Login Realizado com Sucesso",
+                        text2Style: globalStyles.defaultToast2Text,
+                    })
 
-                    if (!hasSavedData) {
-                        showWarning(values);
+                    const tokenResponse = await saveToken(successResponse.token)
+                    const userIdResponse = await saveUserId(successResponse.userData.id)
+
+                    if (tokenResponse.message === "Token Salvo com Sucesso" && userIdResponse.message === "ID Salvo com Sucesso") {
+                        if(hasSavedData) {
+                            navigation?.navigate("Auth_Routes")
+                        } else {
+                            return showWarning(values)
+                        }
                     }
-
-                    await AsyncStorage.setItem("@User_Data", JSON.stringify(isDoneLogin.data));                    
-                    // await AsyncStorage.setItem("@User_TOKEN", JSON.stringify(isDoneLogin.data.token))
-                    navigation?.navigate("Home")
-                    break;
-
-                case "Falha ao Logar":
-                    Toast.show({
+                case Req_Status.UNAUTHORIZED:
+                    return Toast.show({
                         type: 'error',
                         position: 'top',
-                        text1: "Atenção",
-                        text1Style: {
-                            textAlign: 'center',
-                            fontFamily: FONTS.Worksans,
-                            fontSize: RFValue(12),
-                            color: COLORS.light_blue.surface
-                        },
-                        text2: "Usuário ou senha incorretos.",
-                        text2Style: {
-                            textAlign: 'center',
-                            fontFamily: FONTS.Worksans,
-                            fontSize: RFValue(12),
-                            color: COLORS.light_blue.onPrimary
-                        },
                         autoHide: true,
-                        swipeable: true
-                    });
-                    break;
-
-                case "Erro Interno":
-                    Toast.show({
-                        type: 'error',
-                        position: 'top',
+                        swipeable: true,
                         text1: "Atenção",
-                        text1Style: {
-                            textAlign: 'center',
-                            fontFamily: FONTS.Worksans,
-                            fontSize: RFValue(12),
-                            color: COLORS.light_blue.surface
-                        },
-                        text2: "Falha Interna",
-                        text2Style: {
-                            textAlign: 'center',
-                            fontFamily: FONTS.Worksans,
-                            fontSize: RFValue(12),
-                            color: COLORS.light_blue.onPrimary
-                        },
-                        autoHide: true,
-                        swipeable: true
+                        text1Style: globalStyles.defaultToast1Text,
+                        text2: LoginResponse.data.message,
+                        text2Style: globalStyles.defaultToast2Text,
                     });
-                    break;
-
                 default:
-                    Toast.show({
-                        type: "error",
+                    return Toast.show({
+                        type: 'info',
                         position: 'top',
-                        text1: "Atenção",
-                        text1Style: {
-                            textAlign: 'center',
-                            fontFamily: FONTS.Worksans,
-                            fontSize: RFValue(12),
-                            color: COLORS.light_blue.surface
-                        },
-                        text2: "Ocorreu um Erro ao Logar",
-                        text2Style: {
-                            textAlign: 'center',
-                            fontFamily: FONTS.Worksans,
-                            fontSize: RFValue(12),
-                            color: COLORS.light_blue.onPrimary
-                        },
                         autoHide: true,
-                        swipeable: true
-                    });
-                    break;
+                        swipeable: true,
+                        text1: "Atenção",
+                        text1Style: globalStyles.defaultToast1Text,
+                        text2: "Sem Informação",
+                        text2Style: globalStyles.defaultToast2Text,
+                    })
             }
         } catch (error) {
-            console.error("Erro ao realizar login:", error);
             Toast.show({
                 type: "error",
                 position: 'top',
-                text1: "Atenção",
-                text1Style: {
-                    textAlign: 'center',
-                    fontFamily: FONTS.Worksans,
-                    fontSize: RFValue(12),
-                    color: COLORS.light_blue.surface
-                },
-                text2: "Ocorreu um Erro ao Logar",
-                text2Style: {
-                    textAlign: 'center',
-                    fontFamily: FONTS.Worksans,
-                    fontSize: RFValue(12),
-                    color: COLORS.light_blue.onPrimary
-                },
                 autoHide: true,
-                swipeable: true
+                swipeable: true,
+                text1: "Atenção",
+                text1Style: globalStyles.defaultToast1Text,
+                text2: "Ocorreu um Erro ao Logar",
+                text2Style: globalStyles.defaultToast2Text,
             });
         } finally {
             setIsLoading(false);
@@ -243,6 +184,9 @@ const Login = ({ navigation, route }: routeProps) => {
                 if (data !== null) {
                     setSavedEmail(data.email)
                     setSavedPassword(data.password)
+                } else {
+                    setSavedEmail('')
+                    setSavedPassword('')
                 }
             })
         }
@@ -250,7 +194,7 @@ const Login = ({ navigation, route }: routeProps) => {
         checkData()
 
         opacity.value = withTiming(1, { duration: 1500 })
-    }, [])
+    }, [savedEmail, savedPassword])
 
     function handleShowPassword() {
         setHidden(!hidden)
@@ -258,41 +202,41 @@ const Login = ({ navigation, route }: routeProps) => {
 
     return (
         <>
-            <View style={{ zIndex: 99, position: 'relative', top: -30 }}>
+            <View style={{ zIndex: 99, position: 'relative', top: RFValue(25) }}>
                 <Toast config={toastDarkMode} />
             </View>
-            <View style={[globalStyles.container, { backgroundColor: COLORS.dark_blue.background, justifyContent: 'space-between' }]}>
+            <View style={[globalStyles.container, { backgroundColor: COLORS.bgColor, justifyContent: 'space-between' }]}>
                 <View style={{ gap: RFPercentage(3) }}>
                     <KeyboardAvoidingView>
                         <Formik initialValues={loginValues} onSubmit={handleLogin}>
                             {({ handleChange, handleBlur, handleSubmit, values }) => (
                                 <View>
                                     <View style={{ justifyContent: 'flex-start', alignItems: 'center', marginTop: RFPercentage(5) }}>
-                                        <Text style={{ fontSize: RFValue(20), fontFamily: FONTS.Worksans, color: COLORS.light_blue.onPrimary }}> Home Stock </Text>
-                                        <Text style={{ fontSize: RFValue(16), fontFamily: FONTS.Roboto, color: COLORS.light_blue.surfaceVariant }}> Login </Text>
+                                        <Text style={{ fontSize: RFValue(20), fontFamily: FONTS.Worksans, color: COLORS.whiteTxt }}> Home Stock </Text>
+                                        <Text style={{ fontSize: RFValue(16), fontFamily: FONTS.Roboto, color: COLORS.whiteSecondary }}> Login </Text>
                                     </View>
 
                                     <View style={{ justifyContent: 'center', alignItems: 'center', gap: RFPercentage(2) }}>
                                         <TextInput
-                                            label={"Email"}
+                                            label={isCheckingData ? "Verificando Email" : "Email"}
                                             mode='outlined'
-                                            value={savedEmail ? savedEmail : values.email}
+                                            value={values.email}
                                             onChangeText={handleChange('email')}
                                             onBlur={handleBlur('email')}
                                             style={{ width: RFPercentage(40) }}
-                                            left={<TextInput.Icon color={COLORS.light_blue.onPrimary} icon="email" />}
+                                            left={<TextInput.Icon color={COLORS.whitePrimary} icon="email" />}
                                             theme={ThemeDark}
                                         />
 
                                         <TextInput
-                                            label={"Senha"}
+                                            label={isCheckingData ? "Verificando Senha" : "Senha"}
                                             mode='outlined'
-                                            value={savedPassword ? savedPassword : values.password}
+                                            value={values.password}
                                             onChangeText={handleChange('password')}
                                             onBlur={handleBlur('password')}
                                             style={{ width: RFPercentage(40) }}
-                                            left={<TextInput.Icon icon="lock" color={COLORS.light_blue.onPrimary} />}
-                                            right={<TextInput.Icon color={COLORS.light_blue.onPrimary} icon={hidden ? "eye" : "eye-off"} onPress={handleShowPassword} />}
+                                            left={<TextInput.Icon icon="lock" color={COLORS.whitePrimary} />}
+                                            right={<TextInput.Icon color={COLORS.whitePrimary} icon={hidden ? "eye" : "eye-off"} onPress={handleShowPassword} />}
                                             secureTextEntry={hidden ? false : true}
                                             theme={ThemeDark}
                                         />
@@ -301,9 +245,9 @@ const Login = ({ navigation, route }: routeProps) => {
                                     <View style={{ justifyContent: 'center', alignItems: 'center', gap: RFPercentage(2), marginTop: RFPercentage(5) }}>
                                         <Button theme={ThemeLight} mode='contained' style={{ width: RFPercentage(40), }} onPress={() => handleSubmit()}>
                                             {isLoading ? (
-                                                <ActivityIndicator color={COLORS.light_blue.onPrimary} />
+                                                <ActivityIndicator color={COLORS.whitePrimary} />
                                             ) : (
-                                                <Text style={{ fontFamily: FONTS.Worksans, color: COLORS.light_blue.onPrimary, textTransform: 'uppercase', fontSize: RFValue(15) }}> Acessar </Text>
+                                                <Text style={{ fontFamily: FONTS.Worksans, color: COLORS.whiteTxt, textTransform: 'uppercase', fontSize: RFValue(15) }}> Acessar </Text>
                                             )}
                                         </Button>
                                     </View>
@@ -318,16 +262,16 @@ const Login = ({ navigation, route }: routeProps) => {
                     <Divider bold={true} theme={ThemeDark} style={{ width: RFPercentage(40) }} />
                 </View>
 
-                <View style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'column', backgroundColor: COLORS.dark_blue.backdrop, padding: RFPercentage(3), gap: RFPercentage(3) }}>
+                <View style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'column', backgroundColor: COLORS.loginSecondary, padding: RFPercentage(3), gap: RFPercentage(3) }}>
                     <Animated.Image source={imageSRC} style={[AnimatedOpacityStyle, { height: RFValue(200), width: RFValue(250), resizeMode: 'cover' }]} />
 
 
                     <View style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'row', marginBottom: RFPercentage(3), gap: RFPercentage(1) }}>
-                        <Text style={{ fontSize: RFValue(15), fontFamily: FONTS.Worksans, color: COLORS.light_blue.onPrimary, letterSpacing: -1 }}>
+                        <Text style={{ fontSize: RFValue(15), fontFamily: FONTS.Worksans, color: COLORS.whiteTxt, letterSpacing: -1 }}>
                             Não Tem uma conta ?
                         </Text>
                         <TouchableOpacity onPress={() => navigation?.navigate("Register")}>
-                            <Text style={{ fontSize: RFValue(15), fontFamily: FONTS.Worksans, fontWeight: 'bold', color: COLORS.light_blue.primary }}>Cadastre-se</Text>
+                            <Text style={{ fontSize: RFValue(15), fontFamily: FONTS.Worksans, fontWeight: 'bold', color: COLORS.bluePrimary }}>Cadastre-se</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
